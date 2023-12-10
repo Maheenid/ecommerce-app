@@ -2,6 +2,7 @@ import 'package:ecommerce_app/models/product_model.dart';
 import 'package:ecommerce_app/providers/cart_provider.dart';
 import 'package:ecommerce_app/providers/favorite_provider.dart';
 import 'package:ecommerce_app/screens/buy_now_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_iconly/flutter_iconly.dart';
 import 'package:provider/provider.dart';
@@ -10,8 +11,10 @@ import 'package:uuid/uuid.dart';
 class ProductDetailsScreen extends StatelessWidget {
   const ProductDetailsScreen({super.key, this.productModel});
   final ProductModel? productModel;
+
   @override
   Widget build(BuildContext context) {
+    User? user = FirebaseAuth.instance.currentUser;
     final cartProvider = Provider.of<CartProvider>(context);
     final favoriteProvider =
         Provider.of<FavoriteProvider>(context, listen: true);
@@ -166,26 +169,36 @@ class ProductDetailsScreen extends StatelessWidget {
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 22, 22, 22),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 90, vertical: 20)),
+                    backgroundColor: const Color.fromARGB(255, 22, 22, 22),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 90, vertical: 20),
+                  ),
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (ctx) => BuyNowScreen(
-                          cartId: const Uuid().v4(),
-                          image: productModel!.productImage,
-                          price: productModel!.productPrice,
-                          productId: productModel!.productId,
-                          qty: 1,
-                          title: productModel!.productTitle,
+                    if (user != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (ctx) => BuyNowScreen(
+                            cartId: const Uuid().v4(),
+                            image: productModel!.productImage,
+                            price: productModel!.productPrice,
+                            productId: productModel!.productId,
+                            qty: 1,
+                            title: productModel!.productTitle,
+                          ),
                         ),
-                      ),
-                    );
+                      );
+                    } else if (user == null) {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => const AlertDialog(
+                          title: Text('You must login'),
+                        ),
+                      );
+                    }
                   },
                   child: const Text(
                     'Buy Now',
